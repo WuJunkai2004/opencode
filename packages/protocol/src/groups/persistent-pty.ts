@@ -7,9 +7,11 @@ import { HttpApiEndpoint, HttpApiGroup, HttpApiSchema, OpenApi } from "effect/ht
 import {
   ForbiddenError,
   InvalidRequestError,
+  LocationNotFoundError,
   PtyFeatureUnsupportedError,
   PtyNotFoundError,
   ServiceUnavailableError,
+  SessionNotFoundError,
 } from "../errors.js"
 import { PTY_CONNECT_TICKET_QUERY, PTY_CONNECT_TOKEN_HEADER, PTY_CONNECT_TOKEN_HEADER_VALUE } from "./pty.js"
 
@@ -56,7 +58,8 @@ export const PersistentPtyGroup = HttpApiGroup.make("server.experimental")
       params: { sessionID: Session.ID },
       payload: PersistentPty.CreateInput,
       success: Schema.Struct({ data: PersistentPty.Info }),
-      error: errors,
+      // The handler resolves the configured shell through the session's location.
+      error: [InvalidRequestError, SessionNotFoundError, LocationNotFoundError, ServiceUnavailableError],
     }).annotateMerge(OpenApi.annotations({ identifier: "experimental.persistentPty.create" })),
   )
   .add(
